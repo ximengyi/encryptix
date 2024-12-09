@@ -1,11 +1,10 @@
 use rsa::{RsaPublicKey, RsaPrivateKey, PaddingScheme};
-use rsa::pkcs1v15::Encrypt; // 导入 Encrypt trait
 use rand::rngs::OsRng;
 use std::fs::{File};
 use std::io::{Write, Read};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-use clap::{Command, Arg};
+use clap::{Command, Arg, ArgAction};
 
 fn encrypt_file(pub_key: &RsaPublicKey, file_path: &Path) -> std::io::Result<()> {
     let mut file = File::open(file_path)?;
@@ -62,21 +61,23 @@ fn main() -> std::io::Result<()> {
         .arg(Arg::new("encrypt")
             .short('e')
             .long("encrypt")
-            .action(clap::ArgAction::SetTrue) // 设置动作
+            .action(ArgAction::SetTrue)
             .help("加密操作"))
         .arg(Arg::new("decrypt")
             .short('d')
             .long("decrypt")
-            .action(clap::ArgAction::SetTrue) // 设置动作
+            .action(ArgAction::SetTrue)
             .help("解密操作"))
         .arg(Arg::new("key")
             .short('k')
             .long("key")
+            .action(ArgAction::Set)
             .required(true)
             .help("公钥或私钥文件路径"))
         .arg(Arg::new("input")
             .short('i')
             .long("input")
+            .action(ArgAction::Set)
             .required(true)
             .help("输入文件或目录路径"))
         .get_matches();
@@ -84,8 +85,8 @@ fn main() -> std::io::Result<()> {
     // 获取命令行参数
     let key_path = matches.get_one::<String>("key").unwrap();
     let input_path = matches.get_one::<String>("input").unwrap();
-    let is_encrypt = matches.get_flag("encrypt");
-    let is_decrypt = matches.get_flag("decrypt");
+    let is_encrypt = matches.contains_id("encrypt");
+    let is_decrypt = matches.contains_id("decrypt");
 
     // 确保只执行加密或解密其中之一
     if is_encrypt == is_decrypt {
