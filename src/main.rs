@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 use clap::{Command, Arg, ArgAction};
 
+
 fn encrypt_file(pub_key: &RsaPublicKey, file_path: &Path) -> std::io::Result<()> {
     let mut file = File::open(file_path)?;
     let mut content = Vec::new();
