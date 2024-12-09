@@ -12,7 +12,7 @@ fn encrypt_file(pub_key: &RsaPublicKey, file_path: &Path) -> std::io::Result<()>
     file.read_to_end(&mut content)?;
 
     // 使用 RSA 公钥进行加密
-    let encrypted_data = pub_key.encrypt(&mut OsRng, PaddingScheme::new_pkcs1v15_encrypt(), &content)
+    let encrypted_data = pub_key.encrypt(&mut OsRng, PaddingScheme::new_pkcs1v15(), &content)
         .expect("加密失败");
 
     // 保存加密后的内容为新文件
@@ -29,7 +29,7 @@ fn decrypt_file(priv_key: &RsaPrivateKey, file_path: &Path) -> std::io::Result<(
     file.read_to_end(&mut encrypted_data)?;
 
     // 使用 RSA 私钥进行解密
-    let decrypted_data = priv_key.decrypt(PaddingScheme::new_pkcs1v15_encrypt(), &encrypted_data)
+    let decrypted_data = priv_key.decrypt(PaddingScheme::new_pkcs1v15(), &encrypted_data)
         .expect("解密失败");
 
     // 保存解密后的内容为新文件（去掉 .enc 后缀）
