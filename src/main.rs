@@ -4,7 +4,7 @@ use std::fs::{File};
 use std::io::{Write, Read};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-use clap::{App, Arg};
+use clap::{Command, Arg};
 
 fn encrypt_file(pub_key: &RsaPublicKey, file_path: &Path) -> std::io::Result<()> {
     let mut file = File::open(file_path)?;
@@ -53,8 +53,8 @@ where
 }
 
 fn main() -> std::io::Result<()> {
-    // 使用 clap 解析命令行参数
-    let matches = App::new("Encryptix")
+    // 使用 clap 4.x 解析命令行参数
+    let matches = Command::new("Encryptix")
         .version("1.0")
         .author("ximick")
         .about("一个用于加密和解密文件的工具")
