@@ -1,4 +1,5 @@
 use rsa::{RsaPublicKey, RsaPrivateKey, PaddingScheme};
+use rsa::pkcs1v15::Encrypt; // 导入 Encrypt trait
 use rand::rngs::OsRng;
 use std::fs::{File};
 use std::io::{Write, Read};
@@ -61,32 +62,30 @@ fn main() -> std::io::Result<()> {
         .arg(Arg::new("encrypt")
             .short('e')
             .long("encrypt")
-            .takes_value(false)
+            .action(clap::ArgAction::SetTrue) // 设置动作
             .help("加密操作"))
         .arg(Arg::new("decrypt")
             .short('d')
             .long("decrypt")
-            .takes_value(false)
+            .action(clap::ArgAction::SetTrue) // 设置动作
             .help("解密操作"))
         .arg(Arg::new("key")
             .short('k')
             .long("key")
-            .takes_value(true)
             .required(true)
             .help("公钥或私钥文件路径"))
         .arg(Arg::new("input")
             .short('i')
             .long("input")
-            .takes_value(true)
             .required(true)
             .help("输入文件或目录路径"))
         .get_matches();
 
     // 获取命令行参数
-    let key_path = matches.value_of("key").unwrap();
-    let input_path = matches.value_of("input").unwrap();
-    let is_encrypt = matches.is_present("encrypt");
-    let is_decrypt = matches.is_present("decrypt");
+    let key_path = matches.get_one::<String>("key").unwrap();
+    let input_path = matches.get_one::<String>("input").unwrap();
+    let is_encrypt = matches.get_flag("encrypt");
+    let is_decrypt = matches.get_flag("decrypt");
 
     // 确保只执行加密或解密其中之一
     if is_encrypt == is_decrypt {
