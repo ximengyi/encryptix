@@ -56,7 +56,7 @@ fn main() -> std::io::Result<()> {
     // 使用 clap 解析命令行参数
     let matches = App::new("Encryptix")
         .version("1.0")
-        .author("Your Name <your_email@example.com>")
+        .author("ximick")
         .about("一个用于加密和解密文件的工具")
         .arg(Arg::new("encrypt")
             .short('e')
