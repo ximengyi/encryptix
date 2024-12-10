@@ -6,6 +6,6 @@ edition = "2021"
 [dependencies]
 rsa = "0.9.7"
 rand = "0.8"
-openssl = "0.10"
+ = "0.10"
 walkdir = "2.3"
-clap = "4.0"
+clap = { version = "4.5.23", features = ["derive"] }

@@ -1,11 +1,28 @@
+
 use rsa::{RsaPublicKey, RsaPrivateKey, PaddingScheme};
 use rsa::pkcs8::{FromPrivateKey, FromPublicKey};  // 添加这个导入
+use clap::{Arg, ArgAction, Command};
 use rand::rngs::OsRng;
-use std::fs::{File};
-use std::io::{Write, Read};
+use rsa::{PaddingScheme, RsaPrivateKey, RsaPublicKey};
+use std::fs::File;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-use clap::{Command, Arg, ArgAction};
+
+struct Args {
+    /// Name of the person to greet
+    #[arg(short, long)]
+    input: String,
+
+    #[arg(short, long, default_value_t = false)]
+    encrypt: String,
+
+    #[arg(short, long, default_value_t = false)]
+    decrypt: String,
+
+    #[arg(short, long)]
+    key: String,
+}
 
 
 fn encrypt_file(pub_key: &RsaPublicKey, file_path: &Path) -> std::io::Result<()> {
@@ -14,7 +31,9 @@ fn encrypt_file(pub_key: &RsaPublicKey, file_path: &Path) -> std::io::Result<()>
     file.read_to_end(&mut content)?;
     println!(content);
     // 使用 RSA 公钥进行加密
-    let encrypted_data = pub_key.encrypt(&mut OsRng, PaddingScheme::new_pkcs1v15_encrypt(), &content)
+
+    let encrypted_data = pub_key
+        .encrypt(&mut OsRng, Pkcs1v15Encrypt, &content)
         .expect("加密失败");
 
     // 保存加密后的内容为新文件
@@ -31,7 +50,9 @@ fn decrypt_file(priv_key: &RsaPrivateKey, file_path: &Path) -> std::io::Result<(
     file.read_to_end(&mut encrypted_data)?;
 
     // 使用 RSA 私钥进行解密
-    let decrypted_data = priv_key.decrypt(PaddingScheme::new_pkcs1v15_encrypt(), &encrypted_data)
+
+    let decrypted_data = priv_key
+        .decrypt(Pkcs1v15Encrypt, &encrypted_data)
         .expect("解密失败");
 
     // 保存解密后的内容为新文件（去掉 .enc 后缀）
@@ -56,51 +77,34 @@ where
 
 fn main() -> std::io::Result<()> {
     // 使用 clap 4.x 解析命令行参数
-    let matches = Command::new("Encryptix")
-        .version("1.0")
-        .author("ximick")
-        .about("一个用于加密和解密文件的工具")
-        .arg(Arg::new("encrypt")
-            .short('e')
-            .long("encrypt")
-            .action(ArgAction::SetTrue)
-            .help("加密操作"))
-        .arg(Arg::new("decrypt")
-            .short('d')
-            .long("decrypt")
-            .action(ArgAction::SetTrue)
-            .help("解密操作"))
-        .arg(Arg::new("key")
-            .short('k')
-            .long("key")
-            .action(ArgAction::Set)
-            .required(true)
-            .help("公钥或私钥文件路径"))
-        .arg(Arg::new("input")
-            .short('i')
-            .long("input")
-            .action(ArgAction::Set)
-            .required(true)
-            .help("输入文件或目录路径"))
-        .get_matches();
-
+    let args = Arg::parse();
+    println!("input args:{:#?}", args);
     // 获取命令行参数
-    let key_path = matches.get_one::<String>("key").unwrap();
-    let input_path = matches.get_one::<String>("input").unwrap();
-    let is_encrypt = matches.contains_id("encrypt");
-    let is_decrypt = matches.contains_id("decrypt");
+    let key_path = args.key;
+    let input_pat = args.input;
+    let is_encrypt = args.encrypt;
+    let is_decrypt = args.decrypt;
 
     // 确保只执行加密或解密其中之一
     if is_encrypt == is_decrypt {
-        eprintln!("错误: 请指定只执行加密或解密操作");
+        eprintln!("参数错误: 请指定加密或解密参数,确保只执行加密或解密操作");
         std::process::exit(1);
     }
 
     // 读取公钥或私钥 (假设它们是 PEM 格式)
-    let key_pem = std::fs::read_to_string(key_path).expect("读取密钥文件失败");
+    let private_keypath = key_path;
+    let public_keypath = key_path;
 
-    let pub_key = RsaPublicKey::from_public_key_pem(&key_pem).ok();
-    let priv_key = RsaPrivateKey::from_private_key_pem(&key_pem).ok();
+    if (key_path.is_dir()) {
+        private_keypath = key_path + "private_key.pem";
+        public_keypath = key_path + "public_key.pem";
+    }
+
+    let pub_key_pem = std::fs::read_to_string(public_keypath).expect("读取公密钥文件失败");
+    let pri_key_pem = std::fs::read_to_string(private_keypath).expect("读取私密钥文件失败");
+
+    let pub_key = RsaPublicKey::from_public_key_pem(&pub_key_pem).ok();
+    let priv_key = RsaPrivateKey::from_private_key_pem(&pri_key_pem).ok();
 
     // 确保公钥或私钥文件有效
     if pub_key.is_none() && priv_key.is_none() {
